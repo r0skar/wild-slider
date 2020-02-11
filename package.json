@@ -3,16 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@types/node": "^12.0.0",
-    "@types/react": "^16.9.0",
-    "@types/react-dom": "^16.9.0",
+    "@r0skar/destyle.css": "git+https://github.com/r0skar/destyle.css.git",
+    "@types/node": "^13.7.0",
+    "@types/react": "^16.9.19",
+    "@types/react-dom": "^16.9.5",
+    "@types/styled-components": "^4.4.2",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "react-scripts": "3.3.1",
-    "typescript": "~3.7.2"
+    "styled-components": "^5.0.1",
+    "typescript": "~3.7.5"
+  },
+  "devDependencies": {
+    "concurrently": "^5.1.0",
+    "raw-loader": "^4.0.0"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "BROWSER=none react-scripts start",
     "build": "react-scripts build",
     "lint:types": "tsc --noEmit || true",
     "lint:script": "eslint --color --ext .tsx,.ts,.jsx,.js . || true",
@@ -37,8 +44,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "concurrently": "^5.1.0"
   }
 }
