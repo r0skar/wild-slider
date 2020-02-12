@@ -1,11 +1,11 @@
-import React from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import styled from 'styled-components'
 import { GlobalStyle } from './globalStyle'
 
 const SLIDER_WIDTH = '590px'
 const SLIDER_HEIGHT = '680px'
-const FOOTER_HEIGHT = '5rem'
-const PAGINATION_BULLET_SIZE = '0.75rem'
+const BULLET_SIZE = '0.5rem'
+const BUTTON_SIZE = '5rem'
 
 const AppContainer = styled.div`
   height: 100%;
@@ -15,11 +15,11 @@ const AppContainer = styled.div`
   justify-content: center;
 `
 
-const GalleryContainer = styled.div`
-  background-color: red;
+const Slider = styled.div`
+  background: #000000;
   position: relative;
   overflow: hidden;
-  padding-bottom: ${(parseFloat(SLIDER_WIDTH) / parseFloat(SLIDER_HEIGHT)) * 100}%;
+  padding-bottom: ${(parseFloat(SLIDER_HEIGHT) / parseFloat(SLIDER_WIDTH)) * 100}%;
   width: 100%;
 
   @media screen and (min-width: ${SLIDER_WIDTH}) {
@@ -29,112 +29,199 @@ const GalleryContainer = styled.div`
   }
 `
 
-const GalleryFooter = styled.div`
-  background-color: green;
-  display: grid;
-  grid-template-columns: repeat(2, min-content);
-  align-items: center;
-  justify-content: space-between;
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  height: ${FOOTER_HEIGHT};
-  width: 100%;
-  z-index: 1;
-  user-select: none;
-`
-
-const GalleryPagination = styled.div`
-  background-color: violet;
-  display: grid;
-  grid-auto-flow: column;
-  grid-column-gap: ${PAGINATION_BULLET_SIZE};
-  padding-left: calc(${FOOTER_HEIGHT} / 2);
-`
-
-const PaginationBullet = styled.button<{ isActive?: boolean; isLast?: boolean }>`
-  background-color: ${({ isActive }) => (isActive ? 'yellow' : 'grey')};
-  border-radius: 50%;
-  display: block;
-  cursor: pointer;
-  margin-right: ${({ isLast }) => isLast && `calc(${PAGINATION_BULLET_SIZE} * 2)`};
-  height: ${PAGINATION_BULLET_SIZE};
-  width: ${PAGINATION_BULLET_SIZE};
-`
-
-const GalleryNav = styled.nav`
-  background-color: blue;
-  height: 100%;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-column-gap: 1px;
-`
-
-const NavButton = styled.button<{ isEnabled?: boolean }>`
-  background-color: pink;
-  color: ${({ isEnabled }) => (isEnabled ? 'yellow' : 'grey')};
-  height: 100%;
-  display: block;
-  cursor: ${({ isEnabled }) => (isEnabled ? 'pointer' : 'default')};
-  text-align: center;
-  width: ${FOOTER_HEIGHT};
-`
-
-const ArrowIcon = styled.svg<{ isInverted?: boolean }>`
-  fill: currentColor;
-  transform: ${({ isInverted }) => isInverted && 'rotate(180deg)'};
-  width: calc(${PAGINATION_BULLET_SIZE} * 2);
-`
-
-const GalleryWrapper = styled.div`
+const Wrapper = styled.div`
   position: absolute;
   top: 0;
   left: 0;
   height: 100%;
   width: 100%;
   display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  will-change: transform;
 `
 
-const GalleryItem = styled.div`
+const Footer = styled.div`
   position: absolute;
-  top: 0;
+  bottom: 0;
   left: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, min-content);
+  align-items: center;
+  justify-content: space-between;
+  z-index: 9999;
+  user-select: none;
+`
+
+const Slide = styled.div`
   height: 100%;
   width: 100%;
+
+  & > img {
+    display: block;
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    object-position: 50% 50%;
+  }
 `
 
-export const App: React.FC = () => (
-  <>
-    <GlobalStyle />
-    <AppContainer>
-      <GalleryContainer>
-        <GalleryWrapper>
-          <GalleryItem>GalleryItem</GalleryItem>
-          <GalleryItem>GalleryItem</GalleryItem>
-          <GalleryItem>GalleryItem</GalleryItem>
-          <GalleryItem>GalleryItem</GalleryItem>
-        </GalleryWrapper>
-        <GalleryFooter>
-          <GalleryPagination>
-            <PaginationBullet isActive={true} isLast={true} />
-            <PaginationBullet />
-            <PaginationBullet />
-            <PaginationBullet />
-          </GalleryPagination>
-          <GalleryNav>
-            <NavButton>
-              <ArrowIcon viewBox="0 0 15.8 6.8" isInverted={true}>
-                <polygon points="11.6,0 10.9,0.8 13.6,2.9 0,2.9 0,3.9 13.6,3.9 10.9,6 11.6,6.8 15.8,3.4 " />
-              </ArrowIcon>
-            </NavButton>
-            <NavButton isEnabled={true}>
-              <ArrowIcon viewBox="0 0 15.8 6.8">
-                <polygon points="11.6,0 10.9,0.8 13.6,2.9 0,2.9 0,3.9 13.6,3.9 10.9,6 11.6,6.8 15.8,3.4 " />
-              </ArrowIcon>
-            </NavButton>
-          </GalleryNav>
-        </GalleryFooter>
-      </GalleryContainer>
-    </AppContainer>
-  </>
-)
+const Controls = styled.nav`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+`
+
+const Button = styled.button<{ isEnabled?: boolean }>`
+  cursor: ${({ isEnabled }) => (isEnabled ? 'pointer' : 'default')};
+  pointer-events: ${({ isEnabled }) => (isEnabled ? 'auto' : 'none')};
+  background-color: #ffffff;
+  display: block;
+  text-align: center;
+  height: ${BUTTON_SIZE};
+  width: ${BUTTON_SIZE};
+
+  & > svg {
+    opacity: ${({ isEnabled }) => (isEnabled ? 1 : 0.25)};
+    fill: currentColor;
+    width: 25%;
+    will-change: opacity;
+    transition: opacity 50ms ease-in;
+  }
+
+  &:active {
+    & > svg {
+      opacity: 0.5 !important;
+    }
+  }
+
+  &:first-child {
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+
+    & > svg {
+      transform: rotate(180deg);
+    }
+  }
+`
+
+const Pagination = styled.nav`
+  display: grid;
+  grid-auto-flow: column;
+  grid-column-gap: ${BULLET_SIZE};
+  padding-left: ${BUTTON_SIZE};
+`
+
+const Bullet = styled.button<{ isActive?: boolean }>`
+  background-color: #ffffff;
+  display: block;
+  cursor: pointer;
+  border-radius: 50%;
+  height: ${BULLET_SIZE};
+  width: ${BULLET_SIZE};
+  opacity: ${({ isActive }) => (isActive ? 1 : 0.25)};
+  transform: ${({ isActive }) => isActive && `translateX(calc((${BUTTON_SIZE} / 2) * -1))`};
+  transition: opacity, transform 250ms cubic-bezier(0.39, 0.575, 0.565, 1);
+  will-change: opacity, transform;
+`
+
+export const App: React.FC = () => {
+  const slides = [0, 1, 2, 3]
+  const $wrapper = useRef<HTMLDivElement>(null)
+  const [slideWidth, setSlideWidth] = useState(0)
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0)
+  const [draggableInstance, setDraggableInstance] = useState<Draggable>()
+  const goToSlide = (slideIndex: number) => setActiveSlideIndex(slideIndex)
+  const goToPrevSlide = () => goToSlide(Math.max(activeSlideIndex - 1, 0))
+  const goToNextSlide = () => goToSlide(Math.min(activeSlideIndex + 1, slides.length))
+
+  useEffect(() => {
+    const getSlideWidth = () => $wrapper.current!.clientWidth
+    const updateSlideWidth = () => setSlideWidth(getSlideWidth())
+    const [draggable] = Draggable.create($wrapper.current!, {
+      type: 'x',
+      lockAxis: true,
+      inertia: true,
+      dragResistance: 0.2,
+      edgeResistance: 0.6,
+      maxDuration: 0.4
+    })
+
+    setDraggableInstance(draggable)
+    setSlideWidth(getSlideWidth())
+    window.addEventListener('resize', updateSlideWidth)
+
+    return () => {
+      window.removeEventListener('resize', updateSlideWidth)
+      draggable.kill()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!draggableInstance || slideWidth === 0) return
+
+    draggableInstance.vars.bounds = {
+      minY: 0,
+      maxY: 0,
+      maxX: 0,
+      minX: slideWidth * ((slides.length - 1) * -1)
+    }
+
+    draggableInstance.vars.snap = {
+      x: (value: number) => Math.round(value / slideWidth) * slideWidth
+    }
+
+    draggableInstance.vars.onDragEnd = function() {
+      setActiveSlideIndex(Math.round(Math.abs(this.endX) / slideWidth))
+    }
+
+    draggableInstance.update(true, false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slideWidth])
+
+  useEffect(() => {
+    if (!draggableInstance || draggableInstance.isThrowing) return
+
+    TweenMax.to($wrapper.current, 0.25, {
+      ease: Sine.easeOut,
+      x: slideWidth * activeSlideIndex * -1,
+      onComplete: () => draggableInstance!.update(true, false)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSlideIndex])
+
+  return (
+    <>
+      <GlobalStyle />
+      <AppContainer>
+        <Slider>
+          <Wrapper ref={$wrapper}>
+            {slides.map((_, index) => (
+              <Slide key={index}>
+                <img src={`/img/img0${index + 1}.png`} alt={'index'} />
+              </Slide>
+            ))}
+          </Wrapper>
+          <Footer>
+            <Pagination>
+              {slides.map((_, index) => (
+                <Bullet key={index} isActive={index <= activeSlideIndex} onClick={() => goToSlide(index)} />
+              ))}
+            </Pagination>
+            <Controls>
+              <Button isEnabled={activeSlideIndex > 0} onClick={goToPrevSlide}>
+                <svg viewBox="0 0 15.8 6.8">
+                  <polygon points="11.6,0 10.9,0.8 13.6,2.9 0,2.9 0,3.9 13.6,3.9 10.9,6 11.6,6.8 15.8,3.4 " />
+                </svg>
+              </Button>
+              <Button isEnabled={activeSlideIndex + 1 < slides.length} onClick={goToNextSlide}>
+                <svg viewBox="0 0 15.8 6.8">
+                  <polygon points="11.6,0 10.9,0.8 13.6,2.9 0,2.9 0,3.9 13.6,3.9 10.9,6 11.6,6.8 15.8,3.4 " />
+                </svg>
+              </Button>
+            </Controls>
+          </Footer>
+        </Slider>
+      </AppContainer>
+    </>
+  )
+}
