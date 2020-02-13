@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react'
 import styled from 'styled-components'
+import debounce from 'lodash/debounce'
 import { API_BACKEND_URL } from '../config'
 import { Slide } from '../types'
 
@@ -150,10 +151,10 @@ export const Slider: React.FC<Props> = ({ slides }) => {
   useEffect(() => {
     const draggerInstance = createDragger()
     const getSlideWidth = () => $wrapper.current!.clientWidth
-    const updateSlideWidth = () => setSlideWidth(getSlideWidth())
+    const updateSlideWidth = debounce(() => setSlideWidth(getSlideWidth()), 50)
 
     setDragger(draggerInstance)
-    updateSlideWidth()
+    setSlideWidth(getSlideWidth())
     window.addEventListener('resize', updateSlideWidth)
 
     return () => {
