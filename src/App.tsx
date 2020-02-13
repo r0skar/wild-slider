@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
-import { GlobalStyle } from './globalStyle'
+import { GlobalStyle } from './design/globalStyle'
 import { API_BACKEND_URL, API_TOKEN } from './config'
-import { Slider } from './Slider'
+import { Slider } from './components/Slider'
 import { Slide } from './types'
 
 enum Status {

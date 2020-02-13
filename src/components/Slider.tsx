@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react'
 import styled from 'styled-components'
-import { API_BACKEND_URL } from './config'
-import { Slide } from './types'
+import { API_BACKEND_URL } from '../config'
+import { Slide } from '../types'
 
 interface Props {
   slides: Slide[]
