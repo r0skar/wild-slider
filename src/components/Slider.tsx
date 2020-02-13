@@ -151,7 +151,7 @@ export const Slider: React.FC<Props> = ({ slides }) => {
   useEffect(() => {
     const draggerInstance = createDragger()
     const getSlideWidth = () => $wrapper.current!.clientWidth
-    const updateSlideWidth = debounce(() => setSlideWidth(getSlideWidth()), 50)
+    const updateSlideWidth = debounce(() => setSlideWidth(getSlideWidth()), 10)
 
     setDragger(draggerInstance)
     setSlideWidth(getSlideWidth())
