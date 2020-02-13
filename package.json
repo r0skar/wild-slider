@@ -25,7 +25,8 @@
     "lint:types": "tsc --noEmit || true",
     "lint:script": "eslint --color --ext .tsx,.ts,.jsx,.js . || true",
     "lint": "concurrently 'yarn:lint:*'",
-    "format": "eslint --color --fix --ext .tsx,.ts,.jsx,.js . || true"
+    "format": "eslint --color --fix --ext .tsx,.ts,.jsx,.js . || true",
+    "deploy": "rsync -avzzcrSLh ./build/* forge@104.248.42.219:/home/forge/oskar.wild.wtf/public/"
   },
   "eslintConfig": {
     "extends": "react-app"
