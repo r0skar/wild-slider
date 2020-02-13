@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import styled from 'styled-components'
 import { API_BACKEND_URL } from './config'
 import { Slide } from './types'
@@ -101,6 +101,7 @@ const Button = styled.button<{ isEnabled?: boolean }>`
     }
   }
 
+  /* Left arrow */
   &:first-child {
     border-right: 1px solid rgba(0, 0, 0, 0.1);
 
@@ -124,18 +125,18 @@ const Bullet = styled.button<{ isActive?: boolean }>`
 `
 
 export const Slider: React.FC<Props> = ({ slides }) => {
+  const slideCount = useRef(slides.length)
   const $wrapper = useRef<HTMLDivElement>(null)
   const [slideWidth, setSlideWidth] = useState(0)
+  const [dragger, setDragger] = useState<Draggable>()
   const [activeSlideIndex, setActiveSlideIndex] = useState(0)
-  const [draggableInstance, setDraggableInstance] = useState<Draggable>()
   const goToSlide = (slideIndex: number) => setActiveSlideIndex(slideIndex)
   const goToPrevSlide = () => goToSlide(Math.max(activeSlideIndex - 1, 0))
-  const goToNextSlide = () => goToSlide(Math.min(activeSlideIndex + 1, slides.length))
+  const goToNextSlide = () => goToSlide(Math.min(activeSlideIndex + 1, slideCount.current))
+  const refreshDragger = useCallback(() => dragger?.update(true, false), [dragger])
 
-  useEffect(() => {
-    const getSlideWidth = () => $wrapper.current!.clientWidth
-    const updateSlideWidth = () => setSlideWidth(getSlideWidth())
-    const [draggable] = Draggable.create($wrapper.current!, {
+  const createDragger = () => {
+    return Draggable.create($wrapper.current, {
       type: 'x',
       lockAxis: true,
       inertia: true,
@@ -143,50 +144,54 @@ export const Slider: React.FC<Props> = ({ slides }) => {
       edgeResistance: 0.6,
       maxDuration: 0.4,
       zIndexBoost: false
-    })
+    })[0]
+  }
 
-    setDraggableInstance(draggable)
-    setSlideWidth(getSlideWidth())
+  useEffect(() => {
+    const draggerInstance = createDragger()
+    const getSlideWidth = () => $wrapper.current!.clientWidth
+    const updateSlideWidth = () => setSlideWidth(getSlideWidth())
+
+    setDragger(draggerInstance)
+    updateSlideWidth()
     window.addEventListener('resize', updateSlideWidth)
 
     return () => {
       window.removeEventListener('resize', updateSlideWidth)
-      draggable.kill()
+      draggerInstance.kill()
     }
   }, [])
 
   useEffect(() => {
-    if (!draggableInstance || slideWidth === 0) return
+    if (!dragger || slideWidth === 0) return
 
-    draggableInstance.vars.bounds = {
+    dragger.vars.bounds = {
       minY: 0,
       maxY: 0,
       maxX: 0,
-      minX: slideWidth * ((slides.length - 1) * -1)
+      minX: slideWidth * ((slideCount.current - 1) * -1)
     }
 
-    draggableInstance.vars.snap = {
+    dragger.vars.snap = {
       x: (value: number) => Math.round(value / slideWidth) * slideWidth
     }
 
-    draggableInstance.vars.onDragEnd = function() {
+    dragger.vars.onDragEnd = function() {
       setActiveSlideIndex(Math.round(Math.abs(this.endX) / slideWidth))
     }
 
-    draggableInstance.update(true, false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slideWidth])
+    refreshDragger()
+  }, [dragger, slideWidth, refreshDragger, slideCount])
 
   useEffect(() => {
-    if (!draggableInstance || draggableInstance.isThrowing) return
+    if (!dragger || dragger.isThrowing || dragger.x === slideWidth * activeSlideIndex) return
 
     TweenMax.to($wrapper.current, 0.25, {
       ease: Sine.easeOut,
       x: slideWidth * activeSlideIndex * -1,
-      onComplete: () => draggableInstance!.update(true, false)
+      onComplete: refreshDragger
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSlideIndex])
+  }, [dragger, activeSlideIndex, refreshDragger, slideWidth])
 
   return (
     <Container>
@@ -209,7 +214,7 @@ export const Slider: React.FC<Props> = ({ slides }) => {
               <polygon points="11.6,0 10.9,0.8 13.6,2.9 0,2.9 0,3.9 13.6,3.9 10.9,6 11.6,6.8 15.8,3.4 " />
             </svg>
           </Button>
-          <Button isEnabled={activeSlideIndex + 1 < slides.length} onClick={goToNextSlide}>
+          <Button isEnabled={activeSlideIndex + 1 < slideCount.current} onClick={goToNextSlide}>
             <svg viewBox="0 0 15.8 6.8">
               <polygon points="11.6,0 10.9,0.8 13.6,2.9 0,2.9 0,3.9 13.6,3.9 10.9,6 11.6,6.8 15.8,3.4 " />
             </svg>
