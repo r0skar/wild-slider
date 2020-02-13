@@ -14,6 +14,8 @@ export const GlobalStyle = createGlobalStyle`
     color: #333333;
     font-size: calc(12px + 0.35vmin);
     overflow: hidden;
+	  touch-action: none;
+    text-size-adjust: none;
   }
 
   body {
